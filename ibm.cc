@@ -20,6 +20,7 @@ int main(int argc, char** argv)
         G4MTRunManager *runManager = new G4MTRunManager;
     #else
         G4RunManager *runManager = new G4RunManager;
+        G4cout << "[warning] Built without G4MULTITHREADED. Runs will use one CPU core." << G4endl;
     #endif
 
     //Physics list:

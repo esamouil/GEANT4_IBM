@@ -4,6 +4,8 @@
 
 DetectorConstruction::DetectorConstruction()
 {
+    logical_right_gas = nullptr;
+    logical_boron_plate = nullptr;
 }
 
 DetectorConstruction::~DetectorConstruction()
@@ -16,18 +18,23 @@ G4VPhysicalVolume *DetectorConstruction::Construct()
 
 
     // Create B10 isotope
-    G4Isotope* B10 = new G4Isotope("B10", 5, 10, 10.0129*g/mole); // name, Z, A, mass
+    G4Isotope* B10 = new G4Isotope("B10", 5, 10, 10.0129*g/mole);
     G4Element* elB10 = new G4Element("Boron10", "B10", 1);
-    elB10->AddIsotope(B10, 100.*perCent); // 100% B10
-    G4Material* M_B10 = new G4Material("B10_solid", 2.34*g/cm3, 1); // density, number of elements
-    M_B10->AddElement(elB10, 1); // just the one element
+    elB10->AddIsotope(B10, 100.*perCent);
+
+    // Create B4C material
+    G4NistManager *nist = G4NistManager::Instance();
+    G4Element* elB = nist->FindOrBuildElement("B");
+    G4Element* elC = nist->FindOrBuildElement("C");
+    G4Material* M_B4C = new G4Material("B4C", 2.52*g/cm3, 2);
+    M_B4C->AddElement(elB, 4);
+    M_B4C->AddElement(elC, 1);
 
     //Declare the materials
-    G4NistManager *nist = G4NistManager::Instance();
     G4Material *M_vacuum = nist->FindOrBuildMaterial("G4_Galactic");
     G4Material *M_Al = nist->FindOrBuildMaterial("G4_Al");
     G4Material *M_Gas = nist->FindOrBuildMaterial("G4_Ar");
-    G4Material *M_B = nist->FindOrBuildMaterial("G4_B");
+    G4Material *M_B = M_B4C;
     //G4Material *M_B = M_B10;
 
     // Dimension Parameters
@@ -40,7 +47,7 @@ G4VPhysicalVolume *DetectorConstruction::Construct()
 
     G4double gasWidth = 2*mm;
     G4double plateWidth = 0.1*mm;
-    G4double boronWidth = 100*nm;
+    G4double boronWidth = 120*nm;
 
     G4double center_plate_x = 0;
     G4double left_plate_x = -1*(plateWidth+gasWidth);
@@ -52,6 +59,7 @@ G4VPhysicalVolume *DetectorConstruction::Construct()
 
 
 
+    
     //Define the world volume
     G4Box *solidWorld = new G4Box("solidWorld", xWorld/2, yWorld/2, zWorld/2);
     G4LogicalVolume *logicalWorld = new G4LogicalVolume(solidWorld, M_vacuum,"logicalWorld");
@@ -74,7 +82,7 @@ G4VPhysicalVolume *DetectorConstruction::Construct()
 
     //define the boron plate
     G4Box *solid_boron_plate = new G4Box("solid_boron_plate", boronWidth/2, yDetector/2, zDetector/2);
-    G4LogicalVolume *logical_boron_plate = new G4LogicalVolume(solid_boron_plate, M_B,"logical_boron_plate");
+    logical_boron_plate = new G4LogicalVolume(solid_boron_plate, M_B,"logical_boron_plate");
     G4VPhysicalVolume *phys_boron_plate = new G4PVPlacement(0, {boron_plate_x,0,0}, logical_boron_plate, "phys_boron_plate", logicalWorld, false, 0, checkOverlaps);
 
     //define the left gas volume
@@ -86,6 +94,14 @@ G4VPhysicalVolume *DetectorConstruction::Construct()
     G4Box *solid_right_gas = new G4Box("solid_right_gas", gasWidth/2, yDetector/2, zDetector/2);
     logical_right_gas = new G4LogicalVolume(solid_right_gas, M_Gas,"logical_right_gas");
     G4VPhysicalVolume *phys_right_gas = new G4PVPlacement(0, {right_gas_x,0,0}, logical_right_gas, "phys_right_gas", logicalWorld, false, 0, checkOverlaps);
+
+    // Set step size limit for the right gas volume for improved accuracy
+    G4UserLimits *rightGasLimits = new G4UserLimits(0.1*mm);  // step equal to 1 50th of the gas width 
+    logical_right_gas->SetUserLimits(rightGasLimits);
+
+    // Set step size limit for the boron plate for improved accuracy
+    G4UserLimits *boronLimits = new G4UserLimits(2.4*nm);  // step equal to 1 50th of the boron width 
+    logical_boron_plate->SetUserLimits(boronLimits);
 
 
     //Setting up the colors
@@ -121,4 +137,7 @@ void DetectorConstruction::ConstructSDandField()
     logical_right_gas->SetSensitiveDetector(sensDet);
     G4SDManager::GetSDMpointer()->AddNewDetector(sensDet);
 
+    SensitiveDetector *boronSD = new SensitiveDetector("boronSD", true);
+    logical_boron_plate->SetSensitiveDetector(boronSD);
+    G4SDManager::GetSDMpointer()->AddNewDetector(boronSD);
 }

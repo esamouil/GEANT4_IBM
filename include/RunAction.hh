@@ -6,6 +6,7 @@
 #include "G4AnalysisManager.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4UnitsTable.hh"
+#include <set>
 
 class RunAction : public G4UserRunAction
 {
@@ -16,6 +17,10 @@ class RunAction : public G4UserRunAction
         virtual void BeginOfRunAction(const G4Run *);
         virtual void EndOfRunAction(const G4Run *);
 
+        void AddEventWithHit(G4int eventID) { eventsWithHits.insert(eventID); }
+
+    private:
+        std::set<G4int> eventsWithHits;
 };
 
 #endif

@@ -17,6 +17,7 @@
 #include "G4VisAttributes.hh"
 #include "G4Color.hh"
 #include "G4SDManager.hh"
+#include "G4UserLimits.hh"
 
 #include "SensitiveDetector.hh"
 
@@ -30,6 +31,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     
     private:
         G4LogicalVolume *logical_right_gas;
+        G4LogicalVolume *logical_boron_plate;
         virtual void ConstructSDandField();
 
 };

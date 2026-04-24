@@ -28,6 +28,7 @@ RunAction::RunAction()
     analysisManager->CreateNtupleDColumn("t_post");         // col 11
 
     analysisManager->CreateNtupleIColumn("proc_id");        // col 12
+    analysisManager->CreateNtupleDColumn("pre_ke");         // col 13
 
     analysisManager->FinishNtuple(0);
 
@@ -60,5 +61,11 @@ void RunAction::EndOfRunAction(const G4Run *run)
 
     G4int runID = run->GetRunID();
 
-    G4cout<<"Finishing run "<< runID<<G4endl;
+    // Calculate efficiency
+    G4int numEventsWithHits = eventsWithHits.size();
+    G4int totalEvents = run->GetNumberOfEvent();
+    G4double efficiency = (totalEvents > 0) ? (G4double)numEventsWithHits / totalEvents : 0.0;
+
+    G4cout << "Finishing run " << runID << G4endl;
+    G4cout << "Efficiency: " << efficiency << " (" << numEventsWithHits << "/" << totalEvents << " events with hits)" << G4endl;
 }

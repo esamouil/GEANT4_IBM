@@ -12,3 +12,10 @@
 /vis/scene/add/scale 10 cm 
 /vis/scene/add/axes -10 -10 -10 5 cm
 /vis/scene/add/eventID
+
+
+
+/vis/trajectory/set/particle alpha blue
+/vis/trajectory/set/particle Li7 green
+/vis/trajectory/set/particle e- red
+/vis/trajectory/set/particle gamma yellow
