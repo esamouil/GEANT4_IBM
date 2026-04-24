@@ -1,8 +1,17 @@
 #include "RunAction.hh"
 
+G4double RunAction::fCurrentEnergy = 0.0;
+G4bool RunAction::fWriteEfficiencyEnabled = true;
+G4int RunAction::fLastRunHits = 0;
+G4int RunAction::fLastRunTotalEvents = 0;
+G4double RunAction::fLastRunEfficiency = 0.0;
+
 RunAction::RunAction()
 {
+    G4AccumulableManager::Instance()->Register(fEventsWithHitsCount);
+
     G4AnalysisManager *analysisManager = G4AnalysisManager::Instance();
+    analysisManager->SetNtupleMerging(true);
 
     //analysisManager->CreateH1("Edep","Energy Deposit",100,0,2*MeV);
 
@@ -28,6 +37,7 @@ RunAction::RunAction()
     analysisManager->CreateNtupleDColumn("t_post");         // col 11
 
     analysisManager->CreateNtupleIColumn("proc_id");        // col 12
+    analysisManager->CreateNtupleDColumn("pre_ke");         // col 13
 
     analysisManager->FinishNtuple(0);
 
@@ -38,9 +48,19 @@ RunAction::~RunAction()
 
 }
 
+void RunAction::AddEventWithHit(G4int eventID)
+{
+    if (eventsWithHits.insert(eventID).second)
+    {
+        ++fEventsWithHitsCount;
+    }
+}
+
 void RunAction::BeginOfRunAction(const G4Run *run)
 {
     G4AnalysisManager *analysisManager = G4AnalysisManager::Instance();
+    G4AccumulableManager::Instance()->Reset();
+    eventsWithHits.clear();
 
     G4int runID = run->GetRunID();
 
@@ -53,6 +73,7 @@ void RunAction::BeginOfRunAction(const G4Run *run)
 void RunAction::EndOfRunAction(const G4Run *run)
 {
     G4AnalysisManager *analysisManager = G4AnalysisManager::Instance();
+    G4AccumulableManager::Instance()->Merge();
 
     analysisManager->Write();
 
@@ -60,5 +81,28 @@ void RunAction::EndOfRunAction(const G4Run *run)
 
     G4int runID = run->GetRunID();
 
-    G4cout<<"Finishing run "<< runID<<G4endl;
+    // Calculate efficiency
+    G4int numEventsWithHits = fEventsWithHitsCount.GetValue();
+    G4int totalEvents = run->GetNumberOfEvent();
+    G4double efficiency = (totalEvents > 0) ? (G4double)numEventsWithHits / totalEvents : 0.0;
+
+    if (IsMaster())
+    {
+        fLastRunHits = numEventsWithHits;
+        fLastRunTotalEvents = totalEvents;
+        fLastRunEfficiency = efficiency;
+
+        G4cout << "Finishing run " << runID << G4endl;
+        G4cout << "Efficiency: " << efficiency << " (" << numEventsWithHits << "/" << totalEvents << " events with hits)" << G4endl;
+
+        if (fWriteEfficiencyEnabled)
+        {
+            std::ofstream outFile("efficiency.txt", std::ios::app);
+            outFile << std::scientific << std::setprecision(6)
+                    << fCurrentEnergy / eV << "\t"
+                    << efficiency         << "\t"
+                    << numEventsWithHits  << "\t"
+                    << totalEvents        << "\n";
+        }
+    }
 }

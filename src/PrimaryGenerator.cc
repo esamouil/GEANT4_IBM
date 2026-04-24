@@ -16,7 +16,7 @@ PrimaryGenerator::PrimaryGenerator()
     G4double pz = 0;
 
     //Particle Kinetic energy
-    G4double KE = 0.025 *eV;
+    G4double KE = 0.01 *eV;
 
     G4ThreeVector position(x,y,z);
     G4ThreeVector momentum(px,py,pz);

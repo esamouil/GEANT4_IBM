@@ -13,12 +13,13 @@
 class SensitiveDetector : public G4VSensitiveDetector
 {
     public:
-        SensitiveDetector(G4String);
+        SensitiveDetector(G4String, G4bool isBoron = false);
         ~SensitiveDetector();
 
     private:
 
         G4double fTotalEnergyDeposited;
+        G4bool fIsBoronSD;
 
         virtual void Initialize(G4HCofThisEvent *) override;
         virtual void EndOfEvent(G4HCofThisEvent *) override;
