@@ -1,0 +1,11 @@
+Set up is done through the energies.txt file.
+
+useFixedHits boolean controls whether the simulation
+is done for a fixed number of neutrons shot or a fixed
+number of neutrons interacted in the b4c layer
+
+
+The energies that are tested are declared in the same file
+
+After compilation it is run just with
+./ibm sweep
